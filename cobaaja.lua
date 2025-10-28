@@ -67,7 +67,7 @@ local function AutoFishCycle()
 
         -- FireServer dua kali sekaligus setelah ikan tertangkap
         finishRemote:FireServer()
-        task.wait(0.05)
+        task.wait(0.1)
         finishRemote:FireServer()
 
         fishCount += 1
