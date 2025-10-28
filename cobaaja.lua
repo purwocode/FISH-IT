@@ -40,7 +40,7 @@ local function AutoFishCycle()
     pcall(function()
         -- Equip rod
         equipRemote:FireServer(1)
-        task.wait(0.05)
+        task.wait(0.1)
 
         -- Charge rod
         local timestamp = perfectCast and 9999999999 or (tick() + math.random())
