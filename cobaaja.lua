@@ -1,8 +1,3 @@
-kode dibawah ini sudah fix 
-tapi bisakah kau buat agar fireremotenya dikirim 2 sekaligus?
-
---// AUTO FISH GUI - Versi HyRexxyy Style
--- Pastikan Rayfield sudah di-load
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
