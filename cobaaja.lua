@@ -19,12 +19,6 @@ local rodRemote = net:WaitForChild("RF/ChargeFishingRod")
 local miniGameRemote = net:WaitForChild("RF/RequestFishingMinigameStarted")
 local finishRemote = net:WaitForChild("RE/FishingCompleted")
 
--- Remote penting
-local equipRemote = RE:WaitForChild("EquipToolFromHotbar")
-local rodRemote = RF:WaitForChild("ChargeFishingRod")
-local miniGameRemote = RF:WaitForChild("RequestFishingMinigameStarted")
-local finishRemote = RE:WaitForChild("FishingCompleted")
-
 -- Variabel utama
 local autofish = false
 local perfectCast = false
