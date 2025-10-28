@@ -14,8 +14,10 @@ local net = ReplicatedStorage
 	:WaitForChild("net")
 
 -- Pastikan folder RF dan RE ada
-local RF = net:WaitForChild("RF")
-local RE = net:WaitForChild("RE")
+local equipRemote = net:WaitForChild("RE/EquipToolFromHotbar")
+local rodRemote = net:WaitForChild("RF/ChargeFishingRod")
+local miniGameRemote = net:WaitForChild("RF/RequestFishingMinigameStarted")
+local finishRemote = net:WaitForChild("RE/FishingCompleted")
 
 -- Remote penting
 local equipRemote = RE:WaitForChild("EquipToolFromHotbar")
