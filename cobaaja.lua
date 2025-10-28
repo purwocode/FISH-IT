@@ -1,4 +1,4 @@
---// AUTO FISH GUI - HyRexxyy x GPT Fix
+--// AUTO FISH GUI - Versi HyRexxyy x GPT Full Auto
 -- Pastikan Rayfield sudah di-load
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
@@ -29,12 +29,29 @@ local Window = Rayfield:CreateWindow({
     Name = "🎣 Auto Fishing Hub",
     LoadingTitle = "Fishing AutoFarm",
     LoadingSubtitle = "By HyRexxyy x GPT",
-    ConfigurationSaving = { Enabled = true, FolderName = "AutoFishSettings" },
+    ConfigurationSaving = {Enabled = true, FolderName = "AutoFishSettings"},
     KeySystem = false
 })
 
 local MainTab = Window:CreateTab("⚙️ Main Controls")
 local CounterLabel = MainTab:CreateLabel("🐟 Fish Caught: 0")
+
+-- Fungsi tunggu ikan tertangkap
+local function waitForCatch(timeout)
+    local startTime = tick()
+    while tick() - startTime < timeout do
+        local minigameFolder = workspace:FindFirstChild("FishingMinigame")
+        if minigameFolder and minigameFolder:FindFirstChild(player.Name) then
+            local playerMini = minigameFolder[player.Name]
+            local status = playerMini:FindFirstChild("Caught")
+            if status and status.Value == true then
+                return true
+            end
+        end
+        task.wait(0.1)
+    end
+    return false
+end
 
 -- START / STOP AUTO FISH
 MainTab:CreateToggle({
@@ -48,23 +65,25 @@ MainTab:CreateToggle({
                     pcall(function()
                         -- Equip rod
                         equipRemote:FireServer(1)
-                        task.wait(0.5) -- delay aman untuk equip
+                        task.wait(0.3)
 
                         -- Charge rod
                         local timestamp = perfectCast and 9999999999 or (tick() + math.random())
                         rodRemote:InvokeServer(timestamp)
-                        task.wait(0.5) -- delay setelah charge
+                        task.wait(0.2)
 
                         -- Mini-game cast
-                        local x = perfectCast and -1.238 or (math.random(-1000, 1000)/1000)
-                        local y = perfectCast and 0.969 or (math.random(0, 1000)/1000)
+                        local x = perfectCast and -1.238 or (math.random(-1000,1000)/1000)
+                        local y = perfectCast and 0.969 or (math.random(0,1000)/1000)
                         miniGameRemote:InvokeServer(x, y)
-                        task.wait(2) -- tunggu server proses mini-game
 
-                        -- Finish fishing
-                        finishRemote:FireServer()
-                        fishCount += 1
-                        CounterLabel:Set("🐟 Fish Caught: " .. fishCount)
+                        -- Tunggu ikan tertangkap
+                        local caught = waitForCatch(10) -- timeout 10 detik
+                        if caught then
+                            finishRemote:FireServer()
+                            fishCount += 1
+                            CounterLabel:Set("🐟 Fish Caught: " .. fishCount)
+                        end
                     end)
                     task.wait(autoRecastDelay)
                 end
@@ -104,6 +123,6 @@ MainTab:CreateButton({
 -- Notifikasi awal
 Rayfield:Notify({
     Title = "✅ AutoFish GUI Loaded",
-    Content = "Remotes connected & auto-fish ready!",
+    Content = "Waiting for fish...",
     Duration = 4
 })
