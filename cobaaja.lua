@@ -1,4 +1,4 @@
---// AUTO FISH GUI - Versi HyRexxyy Event-Based
+--// AUTO FISH GUI - Versi HyRexxyy Event-Driven Full
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -20,7 +20,7 @@ local finishRemote = net:WaitForChild("RE/FishingCompleted")
 -- Variabel utama
 local autofish = false
 local perfectCast = false
-local autoRecastDelay = 2
+local autoRecastDelay = 0.5
 local fishCount = 0
 
 -- GUI Setup
@@ -35,48 +35,39 @@ local Window = Rayfield:CreateWindow({
 local MainTab = Window:CreateTab("⚙️ Main Controls")
 local CounterLabel = MainTab:CreateLabel("🐟 Fish Caught: 0")
 
--- Fungsi utama auto fish
+-- Fungsi untuk auto fish event-driven
 local function AutoFishCycle()
     pcall(function()
         -- Equip rod
         equipRemote:FireServer(1)
-        task.wait(0.1)
+        task.wait(0.05)
 
         -- Charge rod
         local timestamp = perfectCast and 9999999999 or (tick() + math.random())
         rodRemote:InvokeServer(timestamp)
-        task.wait(0.5)
 
         -- Perfect / random cast
         local x = perfectCast and -1.238 or (math.random(-1000,1000)/1000)
         local y = perfectCast and 0.969 or (math.random(0,1000)/1000)
         miniGameRemote:InvokeServer(x, y)
 
-        -- Event-based detection
-        local caught = false
-        -- Misal rod punya nilai “HasFish” atau bisa juga detect via folder di player
+        -- Event-based detection dari folder Tools atau Character
         local rodTool = player.Backpack:FindFirstChild("FishingRod") or player.Character:FindFirstChild("FishingRod")
         if rodTool then
+            local caught = Instance.new("BindableEvent")
             local connection
             connection = rodTool:GetAttributeChangedSignal("HasFish"):Connect(function()
                 if rodTool:GetAttribute("HasFish") == true then
-                    caught = true
+                    caught:Fire()
                     connection:Disconnect()
                 end
             end)
-            -- Safety fallback
-            local timer = 0
-            while not caught and timer < 15 do
-                task.wait(0.1)
-                timer += 0.1
-            end
-        else
-            task.wait(5) -- fallback jika rod tidak ketemu
+            caught.Event:Wait() -- menunggu ikan tertangkap
         end
 
-        -- Fire finishRemote dua kali
+        -- FireServer dua kali sekaligus setelah ikan tertangkap
         finishRemote:FireServer()
-        task.wait(0.1)
+        task.wait(0.05)
         finishRemote:FireServer()
 
         fishCount += 1
@@ -113,7 +104,7 @@ MainTab:CreateToggle({
 -- DELAY SLIDER
 MainTab:CreateSlider({
     Name = "⏱️ Auto Recast Delay (seconds)",
-    Range = {0.5, 5},
+    Range = {0.1, 3},
     Increment = 0.1,
     CurrentValue = autoRecastDelay,
     Callback = function(val)
@@ -132,6 +123,6 @@ MainTab:CreateButton({
 -- Notifikasi awal
 Rayfield:Notify({
     Title = "✅ AutoFish GUI Loaded",
-    Content = "Event-based detection ready!",
+    Content = "100% Event-driven fishing ready!",
     Duration = 4
 })
