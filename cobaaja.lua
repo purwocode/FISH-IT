@@ -66,7 +66,7 @@ MainTab:CreateToggle({
                         task.wait(1.3)
 
                         finishRemote:FireServer()
-                        fishCount += 1
+                        fishCount += 10
                         CounterLabel:Set("🐟 Fish Caught: " .. fishCount)
                     end)
                     task.wait(autoRecastDelay)
