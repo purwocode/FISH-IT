@@ -1,32 +1,22 @@
---// AUTO FISH GUI - HyRexxyy x GPT (SafeWait Version)
-
+--// AUTO FISH GUI - HyRexxyy x GPT Fix
 -- Pastikan Rayfield sudah di-load
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = game.Players.LocalPlayer
 
--- Lokasi net
+-- Lokasi Remote
 local net = ReplicatedStorage
     :WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
 
--- SafeWait Function: Bisa pakai path "Folder/SubFolder/Remote"
-local function safeWait(path)
-    local obj = net
-    for name in string.gmatch(path, "[^/]+") do
-        obj = obj:WaitForChild(name)
-    end
-    return obj
-end
-
 -- Remote penting
-local equipRemote = safeWait("RE/EquipToolFromHotbar")
-local rodRemote = safeWait("RF/ChargeFishingRod")
-local miniGameRemote = safeWait("RF/RequestFishingMinigameStarted")
-local finishRemote = safeWait("RE/FishingCompleted")
+local equipRemote = net:WaitForChild("RE/EquipToolFromHotbar")
+local rodRemote = net:WaitForChild("RF/ChargeFishingRod")
+local miniGameRemote = net:WaitForChild("RF/RequestFishingMinigameStarted")
+local finishRemote = net:WaitForChild("RE/FishingCompleted")
 
 -- Variabel utama
 local autofish = false
@@ -39,10 +29,7 @@ local Window = Rayfield:CreateWindow({
     Name = "🎣 Auto Fishing Hub",
     LoadingTitle = "Fishing AutoFarm",
     LoadingSubtitle = "By HyRexxyy x GPT",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "AutoFishSettings"
-    },
+    ConfigurationSaving = { Enabled = true, FolderName = "AutoFishSettings" },
     KeySystem = false
 })
 
@@ -59,20 +46,23 @@ MainTab:CreateToggle({
             task.spawn(function()
                 while autofish do
                     pcall(function()
+                        -- Equip rod
                         equipRemote:FireServer(1)
-                        task.wait(0.1)
+                        task.wait(0.5) -- delay aman untuk equip
 
+                        -- Charge rod
                         local timestamp = perfectCast and 9999999999 or (tick() + math.random())
                         rodRemote:InvokeServer(timestamp)
-                        task.wait(0.1)
+                        task.wait(0.5) -- delay setelah charge
 
+                        -- Mini-game cast
                         local x = perfectCast and -1.238 or (math.random(-1000, 1000)/1000)
                         local y = perfectCast and 0.969 or (math.random(0, 1000)/1000)
                         miniGameRemote:InvokeServer(x, y)
+                        task.wait(2) -- tunggu server proses mini-game
 
-                        task.wait(1.3)
+                        -- Finish fishing
                         finishRemote:FireServer()
-
                         fishCount += 1
                         CounterLabel:Set("🐟 Fish Caught: " .. fishCount)
                     end)
@@ -114,6 +104,6 @@ MainTab:CreateButton({
 -- Notifikasi awal
 Rayfield:Notify({
     Title = "✅ AutoFish GUI Loaded",
-    Content = "All remotes connected successfully!",
+    Content = "Remotes connected & auto-fish ready!",
     Duration = 4
 })
