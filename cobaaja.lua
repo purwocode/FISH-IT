@@ -22,7 +22,8 @@ local autofish = false
 local perfectCast = false
 local autoRecastDelay = 2
 local fishCount = 0
-local rodThreads = 2 -- jumlah rod paralel
+local rodThreads = 2 -- default jumlah rod paralel
+local rodConnections = {}
 
 -- GUI Setup
 local Window = Rayfield:CreateWindow({
@@ -82,13 +83,20 @@ end
 
 -- Fungsi multi-rod
 local function AutoFishMultiRod()
+    -- hentikan semua thread sebelumnya
+    for _, conn in pairs(rodConnections) do
+        if conn then conn:Disconnect() end
+    end
+    rodConnections = {}
+
     for i = 1, rodThreads do
-        task.spawn(function()
+        local thread = task.spawn(function()
             while autofish do
                 AutoFishCycle()
                 task.wait(autoRecastDelay)
             end
         end)
+        table.insert(rodConnections, thread)
     end
 end
 
@@ -121,6 +129,20 @@ MainTab:CreateSlider({
     CurrentValue = autoRecastDelay,
     Callback = function(val)
         autoRecastDelay = val
+    end
+})
+
+-- MULTI-ROD SLIDER
+MainTab:CreateSlider({
+    Name = "🎣 Number of Rods",
+    Range = {1, 5}, -- bisa jalankan 1 sampai 5 rod sekaligus
+    Increment = 1,
+    CurrentValue = rodThreads,
+    Callback = function(val)
+        rodThreads = val
+        if autofish then
+            AutoFishMultiRod() -- restart threads jika sedang berjalan
+        end
     end
 })
 
