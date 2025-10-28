@@ -9,9 +9,9 @@ local player = Players.LocalPlayer
 
 --=== REMOTES ===--
 local net = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net")
-
 local RF = net:WaitForChild("RF")
 local RE = net:WaitForChild("RE")
+
 
 local equipRemote = RE:WaitForChild("EquipToolFromHotbar")
 local rodRemote = RF:WaitForChild("ChargeFishingRod")
