@@ -1,4 +1,4 @@
---// AUTO FISH GUI - Versi HyRexxyy Event-Based Multi-Rod
+--// AUTO FISH GUI - Versi HyRexxyy Event-Based
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -22,7 +22,6 @@ local autofish = false
 local perfectCast = false
 local autoRecastDelay = 2
 local fishCount = 0
-local rodThreads = 2 -- jumlah rod paralel
 
 -- GUI Setup
 local Window = Rayfield:CreateWindow({
@@ -36,22 +35,26 @@ local Window = Rayfield:CreateWindow({
 local MainTab = Window:CreateTab("⚙️ Main Controls")
 local CounterLabel = MainTab:CreateLabel("🐟 Fish Caught: 0")
 
--- Fungsi utama auto fish untuk satu rod
+-- Fungsi utama auto fish
 local function AutoFishCycle()
     pcall(function()
+        -- Equip rod
         equipRemote:FireServer(1)
         task.wait(0.1)
 
+        -- Charge rod
         local timestamp = perfectCast and 9999999999 or (tick() + math.random())
         rodRemote:InvokeServer(timestamp)
         task.wait(0.5)
 
+        -- Perfect / random cast
         local x = perfectCast and -1.238 or (math.random(-1000,1000)/1000)
         local y = perfectCast and 0.969 or (math.random(0,1000)/1000)
         miniGameRemote:InvokeServer(x, y)
 
         -- Event-based detection
         local caught = false
+        -- Misal rod punya nilai “HasFish” atau bisa juga detect via folder di player
         local rodTool = player.Backpack:FindFirstChild("FishingRod") or player.Character:FindFirstChild("FishingRod")
         if rodTool then
             local connection
@@ -61,16 +64,17 @@ local function AutoFishCycle()
                     connection:Disconnect()
                 end
             end)
+            -- Safety fallback
             local timer = 0
             while not caught and timer < 15 do
                 task.wait(0.1)
                 timer += 0.1
             end
         else
-            task.wait(5)
+            task.wait(5) -- fallback jika rod tidak ketemu
         end
 
-        -- Fire finishRemote dua kali sekaligus
+        -- Fire finishRemote dua kali
         finishRemote:FireServer()
         task.wait(0.1)
         finishRemote:FireServer()
@@ -80,18 +84,6 @@ local function AutoFishCycle()
     end)
 end
 
--- Fungsi multi-rod
-local function AutoFishMultiRod()
-    for i = 1, rodThreads do
-        task.spawn(function()
-            while autofish do
-                AutoFishCycle()
-                task.wait(autoRecastDelay)
-            end
-        end)
-    end
-end
-
 -- START / STOP AUTO FISH
 MainTab:CreateToggle({
     Name = "🎣 Enable Auto Fishing",
@@ -99,7 +91,12 @@ MainTab:CreateToggle({
     Callback = function(val)
         autofish = val
         if val then
-            AutoFishMultiRod()
+            task.spawn(function()
+                while autofish do
+                    AutoFishCycle()
+                    task.wait(autoRecastDelay)
+                end
+            end)
         end
     end
 })
@@ -116,7 +113,7 @@ MainTab:CreateToggle({
 -- DELAY SLIDER
 MainTab:CreateSlider({
     Name = "⏱️ Auto Recast Delay (seconds)",
-    Range = {0.1, 5},
+    Range = {0.5, 5},
     Increment = 0.1,
     CurrentValue = autoRecastDelay,
     Callback = function(val)
@@ -135,6 +132,6 @@ MainTab:CreateButton({
 -- Notifikasi awal
 Rayfield:Notify({
     Title = "✅ AutoFish GUI Loaded",
-    Content = "Event-based multi-rod fishing ready!",
+    Content = "Event-based detection ready!",
     Duration = 4
 })
