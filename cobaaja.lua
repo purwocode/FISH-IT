@@ -1,4 +1,7 @@
---// AUTO FISH GUI - Versi HyRexxyy Style (FireServer 2x + Menunggu ikan tertangkap)
+kode dibawah ini sudah fix 
+tapi bisakah kau buat agar fireremotenya dikirim 2 sekaligus?
+
+--// AUTO FISH GUI - Versi HyRexxyy Style
 -- Pastikan Rayfield sudah di-load
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -41,21 +44,6 @@ local MainTab = Window:CreateTab("⚙️ Main Controls")
 
 local CounterLabel = MainTab:CreateLabel("🐟 Fish Caught: 0")
 
--- Fungsi helper untuk menunggu ikan tertangkap
-local function waitForFishCaught()
-    local timeout = 20 -- maksimum menunggu 10 detik
-    local elapsed = 0
-    while elapsed < timeout do
-        -- cek apakah ada event/fish ready (misal dari server atau minigameRemote)
-        -- jika server meng-update status ikan, disini bisa ditambahkan listener
-        -- untuk sementara kita pakai delay sederhana
-        task.wait(10)
-        elapsed += 0.5
-        -- kita anggap ikan tertangkap setelah miniGameRemote dipanggil + 1 detik
-        if elapsed >= 1 then break end
-    end
-end
-
 -- START / STOP AUTO FISH
 MainTab:CreateToggle({
     Name = "🎣 Enable Auto Fishing",
@@ -65,30 +53,29 @@ MainTab:CreateToggle({
         if val then
             task.spawn(function()
                 while autofish do
-                    pcall(function()
-                        -- Pakai rod
-                        equipRemote:FireServer(1)
-                        task.wait(0.1)
+-- Bagian utama dalam while autofish
+pcall(function()
+    equipRemote:FireServer(1)
+    task.wait(0.1)
 
-                        local timestamp = perfectCast and 9999999999 or (tick() + math.random())
-                        rodRemote:InvokeServer(timestamp)
-                        task.wait(10)
+    local timestamp = perfectCast and 9999999999 or (tick() + math.random())
+    rodRemote:InvokeServer(timestamp)
+    task.wait(10)
 
-                        local x = perfectCast and -1.238 or (math.random(-1000, 1000) / 1000)
-                        local y = perfectCast and 0.969 or (math.random(0, 1000) / 1000)
+    local x = perfectCast and -1.238 or (math.random(-1000, 1000) / 1000)
+    local y = perfectCast and 0.969 or (math.random(0, 1000) / 1000)
 
-                        miniGameRemote:InvokeServer(x, y)
+    miniGameRemote:InvokeServer(x, y)
+    task.wait(20)
 
-                        -- Tunggu ikan benar-benar tertangkap
-                        waitForFishCaught()
+    -- FireServer dua kali sekaligus
+    finishRemote:FireServer()
+    finishRemote:FireServer()
 
-                        -- Kirim FireServer 2x sekaligus
-                        finishRemote:FireServer()
-                        finishRemote:FireServer()
+    fishCount += 1
+    CounterLabel:Set("🐟 Fish Caught: " .. fishCount)
+end)
 
-                        fishCount += 1
-                        CounterLabel:Set("🐟 Fish Caught: " .. fishCount)
-                    end)
                     task.wait(autoRecastDelay)
                 end
             end)
