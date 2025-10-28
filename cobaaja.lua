@@ -1,4 +1,4 @@
---// AUTO FISH GUI - Versi HyRexxyy Event-Based Multi-Rod
+--// AUTO FISH GUI - Versi HyRexxyy Event-Based Multi-Rod Stable
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -22,8 +22,9 @@ local autofish = false
 local perfectCast = false
 local autoRecastDelay = 2
 local fishCount = 0
-local rodThreads = 2 -- default jumlah rod paralel
+local rodThreads = 2
 local rodConnections = {}
+local rodName = "FishingRod"
 
 -- GUI Setup
 local Window = Rayfield:CreateWindow({
@@ -37,11 +38,22 @@ local Window = Rayfield:CreateWindow({
 local MainTab = Window:CreateTab("⚙️ Main Controls")
 local CounterLabel = MainTab:CreateLabel("🐟 Fish Caught: 0")
 
+-- Fungsi untuk memastikan rod tersedia
+local function GetRod()
+    local rod = player.Backpack:FindFirstChild(rodName) or player.Character:FindFirstChild(rodName)
+    if not rod then
+        equipRemote:FireServer(1)
+        task.wait(0.1)
+        rod = player.Backpack:FindFirstChild(rodName) or player.Character:FindFirstChild(rodName)
+    end
+    return rod
+end
+
 -- Fungsi utama auto fish untuk satu rod
 local function AutoFishCycle()
     pcall(function()
-        equipRemote:FireServer(1)
-        task.wait(0.1)
+        local rodTool = GetRod()
+        if not rodTool then return end
 
         local timestamp = perfectCast and 9999999999 or (tick() + math.random())
         rodRemote:InvokeServer(timestamp)
@@ -53,25 +65,22 @@ local function AutoFishCycle()
 
         -- Event-based detection
         local caught = false
-        local rodTool = player.Backpack:FindFirstChild("FishingRod") or player.Character:FindFirstChild("FishingRod")
-        if rodTool then
-            local connection
-            connection = rodTool:GetAttributeChangedSignal("HasFish"):Connect(function()
-                if rodTool:GetAttribute("HasFish") == true then
-                    caught = true
-                    connection:Disconnect()
-                end
-            end)
-            local timer = 0
-            while not caught and timer < 15 do
-                task.wait(0.1)
-                timer += 0.1
+        local connection
+        connection = rodTool:GetAttributeChangedSignal("HasFish"):Connect(function()
+            if rodTool:GetAttribute("HasFish") == true then
+                caught = true
+                connection:Disconnect()
             end
-        else
-            task.wait(5)
+        end)
+
+        -- Safety timer
+        local timer = 0
+        while not caught and timer < 15 do
+            task.wait(0.1)
+            timer += 0.1
         end
 
-        -- Fire finishRemote dua kali sekaligus
+        -- Fire finishRemote dua kali
         finishRemote:FireServer()
         task.wait(0.1)
         finishRemote:FireServer()
@@ -85,7 +94,7 @@ end
 local function AutoFishMultiRod()
     -- hentikan semua thread sebelumnya
     for _, conn in pairs(rodConnections) do
-        if conn then conn:Disconnect() end
+        if conn then task.cancel(conn) end
     end
     rodConnections = {}
 
@@ -135,7 +144,7 @@ MainTab:CreateSlider({
 -- MULTI-ROD SLIDER
 MainTab:CreateSlider({
     Name = "🎣 Number of Rods",
-    Range = {1, 5}, -- bisa jalankan 1 sampai 5 rod sekaligus
+    Range = {1, 5},
     Increment = 1,
     CurrentValue = rodThreads,
     Callback = function(val)
@@ -150,6 +159,11 @@ MainTab:CreateSlider({
 MainTab:CreateButton({
     Name = "❌ Close GUI",
     Callback = function()
+        autofish = false
+        for _, conn in pairs(rodConnections) do
+            if conn then task.cancel(conn) end
+        end
+        rodConnections = {}
         Rayfield:Destroy()
     end
 })
@@ -157,6 +171,6 @@ MainTab:CreateButton({
 -- Notifikasi awal
 Rayfield:Notify({
     Title = "✅ AutoFish GUI Loaded",
-    Content = "Event-based multi-rod fishing ready!",
+    Content = "Stable multi-rod event-based fishing ready!",
     Duration = 4
 })
