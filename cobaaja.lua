@@ -57,13 +57,13 @@ MainTab:CreateToggle({
 
                         local timestamp = perfectCast and 9999999999 or (tick() + math.random())
                         rodRemote:InvokeServer(timestamp)
-                        task.wait(0.1)
+                        task.wait(10)
 
                         local x = perfectCast and -1.238 or (math.random(-1000, 1000) / 1000)
                         local y = perfectCast and 0.969 or (math.random(0, 1000) / 1000)
 
                         miniGameRemote:InvokeServer(x, y)
-                        task.wait(1.3)
+                        task.wait(20)
 
                         finishRemote:FireServer()
                         fishCount += 10
