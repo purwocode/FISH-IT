@@ -1,24 +1,32 @@
+--// AUTO FISH GUI - HyRexxyy x GPT (SafeWait Version)
 
---// AUTO FISH GUI - Versi HyRexxyy Style
 -- Pastikan Rayfield sudah di-load
-
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = game.Players.LocalPlayer
 
--- Lokasi Remote (mengikuti struktur sleitnick_net@0.2.0)
+-- Lokasi net
 local net = ReplicatedStorage
     :WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
 
+-- SafeWait Function: Bisa pakai path "Folder/SubFolder/Remote"
+local function safeWait(path)
+    local obj = net
+    for name in string.gmatch(path, "[^/]+") do
+        obj = obj:WaitForChild(name)
+    end
+    return obj
+end
+
 -- Remote penting
-local equipRemote = net:WaitForChild("RE/EquipToolFromHotbar")
-local rodRemote = net:WaitForChild("RF/ChargeFishingRod")
-local miniGameRemote = net:WaitForChild("RF/RequestFishingMinigameStarted")
-local finishRemote = net:WaitForChild("RE/FishingCompleted")
+local equipRemote = safeWait("RE/EquipToolFromHotbar")
+local rodRemote = safeWait("RF/ChargeFishingRod")
+local miniGameRemote = safeWait("RF/RequestFishingMinigameStarted")
+local finishRemote = safeWait("RE/FishingCompleted")
 
 -- Variabel utama
 local autofish = false
@@ -39,7 +47,6 @@ local Window = Rayfield:CreateWindow({
 })
 
 local MainTab = Window:CreateTab("⚙️ Main Controls")
-
 local CounterLabel = MainTab:CreateLabel("🐟 Fish Caught: 0")
 
 -- START / STOP AUTO FISH
@@ -59,13 +66,13 @@ MainTab:CreateToggle({
                         rodRemote:InvokeServer(timestamp)
                         task.wait(0.1)
 
-                        local x = perfectCast and -1.238 or (math.random(-1000, 1000) / 1000)
-                        local y = perfectCast and 0.969 or (math.random(0, 1000) / 1000)
-
+                        local x = perfectCast and -1.238 or (math.random(-1000, 1000)/1000)
+                        local y = perfectCast and 0.969 or (math.random(0, 1000)/1000)
                         miniGameRemote:InvokeServer(x, y)
-                        task.wait(1.3)
 
+                        task.wait(1.3)
                         finishRemote:FireServer()
+
                         fishCount += 1
                         CounterLabel:Set("🐟 Fish Caught: " .. fishCount)
                     end)
