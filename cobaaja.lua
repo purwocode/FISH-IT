@@ -1,6 +1,7 @@
+--// AUTO FISH GUI - Versi HyRexxyy Style
+-- Pastikan Rayfield sudah di-load
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = game.Players.LocalPlayer
 
@@ -28,15 +29,11 @@ local Window = Rayfield:CreateWindow({
     Name = "🎣 Auto Fishing Hub",
     LoadingTitle = "Fishing AutoFarm",
     LoadingSubtitle = "By HyRexxyy x GPT",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "AutoFishSettings"
-    },
+    ConfigurationSaving = { Enabled = true, FolderName = "AutoFishSettings" },
     KeySystem = false
 })
 
 local MainTab = Window:CreateTab("⚙️ Main Controls")
-
 local CounterLabel = MainTab:CreateLabel("🐟 Fish Caught: 0")
 
 -- START / STOP AUTO FISH
@@ -48,29 +45,38 @@ MainTab:CreateToggle({
         if val then
             task.spawn(function()
                 while autofish do
--- Bagian utama dalam while autofish
-pcall(function()
-    equipRemote:FireServer(1)
-    task.wait(0.1)
+                    pcall(function()
+                        -- Equip rod
+                        equipRemote:FireServer(1)
+                        task.wait(0.1)
 
-    local timestamp = perfectCast and 9999999999 or (tick() + math.random())
-    rodRemote:InvokeServer(timestamp)
-    task.wait(10)
+                        -- Charge rod
+                        local timestamp = perfectCast and 9999999999 or (tick() + math.random())
+                        rodRemote:InvokeServer(timestamp)
+                        task.wait(5) -- Tunggu rod siap
 
-    local x = perfectCast and -1.238 or (math.random(-1000, 1000) / 1000)
-    local y = perfectCast and 0.969 or (math.random(0, 1000) / 1000)
+                        -- Random atau perfect cast
+                        local x = perfectCast and -1.238 or (math.random(-1000,1000)/1000)
+                        local y = perfectCast and 0.969 or (math.random(0,1000)/1000)
 
-    miniGameRemote:InvokeServer(x, y)
-    task.wait(20)
+                        miniGameRemote:InvokeServer(x, y)
 
-    -- FireServer dua kali sekaligus
-    finishRemote:FireServer()
-    finishRemote:FireServer()
+                        -- Tunggu ikan benar-benar tertangkap
+                        local waitTime = 0
+                        repeat
+                            task.wait(0.5)
+                            waitTime += 0.5
+                        until waitTime >= 10 -- atau bisa sesuaikan kalau ingin menunggu lebih lama
 
-    fishCount += 1
-    CounterLabel:Set("🐟 Fish Caught: " .. fishCount)
-end)
+                        -- Kirim finishRemote dua kali dengan delay kecil
+                        finishRemote:FireServer()
+                        task.wait(0.1)
+                        finishRemote:FireServer()
 
+                        -- Update counter
+                        fishCount += 1
+                        CounterLabel:Set("🐟 Fish Caught: " .. fishCount)
+                    end)
                     task.wait(autoRecastDelay)
                 end
             end)
