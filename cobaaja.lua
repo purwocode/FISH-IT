@@ -20,7 +20,7 @@ local finishRemote = net:WaitForChild("RE/FishingCompleted")
 -- Variabel utama
 local autofish = false
 local perfectCast = false
-local autoRecastDelay = 0.5
+local autoRecastDelay = 2
 local fishCount = 0
 
 -- GUI Setup
