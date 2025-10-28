@@ -43,13 +43,13 @@ local CounterLabel = MainTab:CreateLabel("🐟 Fish Caught: 0")
 
 -- Fungsi helper untuk menunggu ikan tertangkap
 local function waitForFishCaught()
-    local timeout = 10 -- maksimum menunggu 10 detik
+    local timeout = 20 -- maksimum menunggu 10 detik
     local elapsed = 0
     while elapsed < timeout do
         -- cek apakah ada event/fish ready (misal dari server atau minigameRemote)
         -- jika server meng-update status ikan, disini bisa ditambahkan listener
         -- untuk sementara kita pakai delay sederhana
-        task.wait(0.5)
+        task.wait(10)
         elapsed += 0.5
         -- kita anggap ikan tertangkap setelah miniGameRemote dipanggil + 1 detik
         if elapsed >= 1 then break end
@@ -72,7 +72,7 @@ MainTab:CreateToggle({
 
                         local timestamp = perfectCast and 9999999999 or (tick() + math.random())
                         rodRemote:InvokeServer(timestamp)
-                        task.wait(0.5)
+                        task.wait(10)
 
                         local x = perfectCast and -1.238 or (math.random(-1000, 1000) / 1000)
                         local y = perfectCast and 0.969 or (math.random(0, 1000) / 1000)
