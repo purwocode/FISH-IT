@@ -1,137 +1,97 @@
---// AUTO FISH GUI - Versi HyRexxyy Event-Based
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
--- Lokasi Remote
-local net = ReplicatedStorage
-    :WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
+-- Remotes
+local net = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net
+local chargeRodRemote = net["RF/ChargeFishingRod"]
+local miniGameRemote = net["RF/RequestFishingMinigameStarted"]
+local fishingCompletedRemote = net["RE/FishingCompleted"]
 
--- Remote penting
-local equipRemote = net:WaitForChild("RE/EquipToolFromHotbar")
-local rodRemote = net:WaitForChild("RF/ChargeFishingRod")
-local miniGameRemote = net:WaitForChild("RF/RequestFishingMinigameStarted")
-local finishRemote = net:WaitForChild("RE/FishingCompleted")
+-- State
+local autoFish = false
+local loopTask = nil
 
--- Variabel utama
-local autofish = false
-local perfectCast = false
-local autoRecastDelay = 2
-local fishCount = 0
+-- GUI setup
+local gui = Instance.new("ScreenGui")
+gui.Name = "RecastFishGUI"
+gui.Parent = player:WaitForChild("PlayerGui")
 
--- GUI Setup
-local Window = Rayfield:CreateWindow({
-    Name = "🎣 Auto Fishing Hub",
-    LoadingTitle = "Fishing AutoFarm",
-    LoadingSubtitle = "By HyRexxyy x GPT",
-    ConfigurationSaving = { Enabled = true, FolderName = "AutoFishSettings" },
-    KeySystem = false
-})
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 220, 0, 130)
+frame.Position = UDim2.new(0, 20, 0, 20)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Parent = gui
 
-local MainTab = Window:CreateTab("⚙️ Main Controls")
-local CounterLabel = MainTab:CreateLabel("🐟 Fish Caught: 0")
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 200, 0, 40)
+toggleButton.Position = UDim2.new(0, 10, 0, 10)
+toggleButton.Text = "▶️ Start Auto Fish"
+toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.TextSize = 18
+toggleButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+toggleButton.Parent = frame
 
--- Fungsi utama auto fish
-local function AutoFishCycle()
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 200, 0, 40)
+closeButton.Position = UDim2.new(0, 10, 0, 60)
+closeButton.Text = "❌ Close GUI"
+closeButton.TextColor3 = Color3.fromRGB(255,255,255)
+closeButton.Font = Enum.Font.SourceSansBold
+closeButton.TextSize = 18
+closeButton.BackgroundColor3 = Color3.fromRGB(100, 20, 20)
+closeButton.Parent = frame
+
+-- Fungsi utama
+local function instantRecast()
     pcall(function()
-        -- Equip rod
-        equipRemote:FireServer(1)
+        -- charge fishing rod
+        chargeRodRemote:InvokeServer(workspace:GetServerTimeNow())
         task.wait(0.1)
 
-        -- Charge rod
-        local timestamp = perfectCast and 9999999999 or (tick() + math.random())
-        rodRemote:InvokeServer(timestamp)
-        task.wait(0.5)
+        -- lempar pancingan (minigame)
+        miniGameRemote:InvokeServer(-0.65 + math.random() * 0.05, 0.91)
+        task.wait(2)
 
-        -- Perfect / random cast
-        local x = perfectCast and -1.238 or (math.random(-1000,1000)/1000)
-        local y = perfectCast and 0.969 or (math.random(0,1000)/1000)
-        miniGameRemote:InvokeServer(x, y)
-
-        -- Event-based detection
-        local caught = false
-        -- Misal rod punya nilai “HasFish” atau bisa juga detect via folder di player
-        local rodTool = player.Backpack:FindFirstChild("FishingRod") or player.Character:FindFirstChild("FishingRod")
-        if rodTool then
-            local connection
-            connection = rodTool:GetAttributeChangedSignal("HasFish"):Connect(function()
-                if rodTool:GetAttribute("HasFish") == true then
-                    caught = true
-                    connection:Disconnect()
-                end
-            end)
-            -- Safety fallback
-            local timer = 0
-            while not caught and timer < 15 do
-                task.wait(0.1)
-                timer += 0.1
-            end
-        else
-            task.wait(5) -- fallback jika rod tidak ketemu
-        end
-
-        -- Fire finishRemote dua kali
-        finishRemote:FireServer()
-        task.wait(0.1)
-        finishRemote:FireServer()
-
-        fishCount += 1
-        CounterLabel:Set("🐟 Fish Caught: " .. fishCount)
+        -- selesai memancing (ikan langsung didapat)
+        fishingCompletedRemote:FireServer()
+        task.wait(0.05)
     end)
 end
 
--- START / STOP AUTO FISH
-MainTab:CreateToggle({
-    Name = "🎣 Enable Auto Fishing",
-    CurrentValue = false,
-    Callback = function(val)
-        autofish = val
-        if val then
-            task.spawn(function()
-                while autofish do
-                    AutoFishCycle()
-                    task.wait(autoRecastDelay)
-                end
-            end)
+local function startAutoFishing()
+    if loopTask then return end
+    autoFish = true
+    loopTask = task.spawn(function()
+        while autoFish do
+            instantRecast()
+            task.wait(0.05) -- jeda antar recast
         end
-    end
-})
+    end)
+end
 
--- PERFECT CAST OPTION
-MainTab:CreateToggle({
-    Name = "✨ Use Perfect Cast",
-    CurrentValue = false,
-    Callback = function(val)
-        perfectCast = val
-    end
-})
+local function stopAutoFishing()
+    autoFish = false
+    loopTask = nil
+end
 
--- DELAY SLIDER
-MainTab:CreateSlider({
-    Name = "⏱️ Auto Recast Delay (seconds)",
-    Range = {0.5, 5},
-    Increment = 0.1,
-    CurrentValue = autoRecastDelay,
-    Callback = function(val)
-        autoRecastDelay = val
+-- GUI Controls
+toggleButton.MouseButton1Click:Connect(function()
+    if not autoFish then
+        toggleButton.Text = "⏹ Stop Auto Fish"
+        startAutoFishing()
+    else
+        toggleButton.Text = "▶️ Start Auto Fish"
+        stopAutoFishing()
     end
-})
+end)
 
--- CLOSE GUI BUTTON
-MainTab:CreateButton({
-    Name = "❌ Close GUI",
-    Callback = function()
-        Rayfield:Destroy()
-    end
-})
+closeButton.MouseButton1Click:Connect(function()
+    stopAutoFishing()
+    gui:Destroy()
+end)
 
--- Notifikasi awal
-Rayfield:Notify({
-    Title = "✅ AutoFish GUI Loaded",
-    Content = "Event-based detection ready!",
-    Duration = 4
-})
+print("[✅] Recast Auto Fishing Loaded — Tanpa Equip Rod.")
