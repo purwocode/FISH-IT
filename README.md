@@ -1,0 +1,3 @@
+ASTRAL = ASTRAL<br>
+GHOSTFIND = GHOSTFIND<br>
+cobaaja = ELEMENT ROD<br>
