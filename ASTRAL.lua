@@ -25,7 +25,7 @@ local function instantRecast()
     pcall(function()
         chargeRodRemote:InvokeServer(miniGameRemote)
         miniGameRemote:InvokeServer(999999999999.9999999 + 9999999 * 9999999.9999999, 9999999.9999999)
-        task.wait(1.5)
+        task.wait(2)
         fishingCompletedRemote:FireServer(999999999999.9999999 + 9999999 * 9999999.9999999, 9999999.9999999)
     end)
 end
