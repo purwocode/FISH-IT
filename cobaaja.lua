@@ -60,9 +60,7 @@ closeButton.Parent = frame
 
 -- 🧭 TELEPORT LOCATIONS
 local teleportPoints = {
-    ["X2"] = Vector3.new(99, 0, 0),
-    ["X4"] = Vector3.new(396, 0, 0),
-    ["X8"] = Vector3.new(792, 0, 0),
+    ["CRYSTAL FALL"] = Vector3.new(-1957.25 , -440.00, 7385.86),
     ["CRYSTAL CAVERN"] = Vector3.new(-1609.50, -447.75, 7238.00),
     ["Sisyphus STATUE"] = Vector3.new(-3705.79, -135.24, -1021.82),
     ["Mount Hallow"] = Vector3.new(1796.60, 2.67, 3066.99),
