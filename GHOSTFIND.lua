@@ -1,6 +1,3 @@
--- ⚡ AUTO FISH 3X + TELEPORT (Dragable + Minimize)
--- by GPT-5
-
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
@@ -277,4 +274,4 @@ sellAllButton.MouseButton1Click:Connect(function()
     end)
 end)
 
-print("[✅] Dragable Auto Fish & Teleport GUI Loaded — by GPT-5")
+print("[✅] LERGALER Auto Fish,Auto Sell & Teleport")
