@@ -3,6 +3,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 
 -- Remotes
@@ -12,6 +13,7 @@ local miniGameRemote = net["RF/RequestFishingMinigameStarted"]
 local fishingCompletedRemote = net["RE/FishingCompleted"]
 local equipRemote = net["RE/EquipToolFromHotbar"]
 local REFishCaught = net["RE/FishCaught"]
+local RFSellAllItems = net["RF/SellAllItems"] -- RemoteFunction
 
 -- State
 local autoFish = false
@@ -19,6 +21,7 @@ local loopTask = nil
 local minimized = false
 local dragging = false
 local dragInput, dragStart, startPos
+
 -- 🐟 AUTO FISH FUNCTIONS
 local function instantRecast()
     pcall(function()
@@ -29,26 +32,11 @@ local function instantRecast()
     end)
 end
 
-REFishCaught.OnClientEvent:Connect(function(fishName, fishData)
-    if autoFish then
-        instantRecast()  -- ✅ sekarang sudah didefinisikan
-    end
-end)
-
-
 local function equipRodFast()
     pcall(function()
         equipRemote:FireServer(1)
     end)
 end
-
-REFishCaught.OnClientEvent:Connect(function(fishName, fishData)
-    if autoFish then
-        print("[🎣] Fish caught:", fishName, "Weight:", fishData.Weight)
-        equipRodFast()
-        instantRecast()
-    end
-end)
 
 local function startLoop()
     if loopTask then return end
@@ -65,6 +53,15 @@ local function stopLoop()
     autoFish = false
     loopTask = nil
 end
+
+-- Listener REFishCaught
+REFishCaught.OnClientEvent:Connect(function(fishName, fishData)
+    if autoFish then
+        print("[🎣] Fish caught:", fishName, "Weight:", fishData.Weight)
+        equipRodFast()
+        instantRecast()
+    end
+end)
 
 -- 🧭 TELEPORT LOCATIONS
 local teleportPoints = {
@@ -128,7 +125,7 @@ title.InputChanged:Connect(function(input)
     end
 end)
 
-game:GetService("UserInputService").InputChanged:Connect(function(input)
+UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
         frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
@@ -262,7 +259,8 @@ minimizeButton.MouseButton1Click:Connect(function()
     btnAutoFishMenu.Visible = not minimized
     btnTeleportMenu.Visible = not minimized
 end)
--- Tambahkan di bagian Auto Fish Panel setelah toggleButton
+
+-- Sell all fish button
 local sellAllButton = Instance.new("TextButton")
 sellAllButton.Size = UDim2.new(0,240,0,35)
 sellAllButton.Position = UDim2.new(0,0,0,45)
@@ -272,9 +270,6 @@ sellAllButton.Font = Enum.Font.SourceSansBold
 sellAllButton.TextSize = 16
 sellAllButton.BackgroundColor3 = Color3.fromRGB(60,45,45)
 sellAllButton.Parent = autoFishPanel
-
--- Remote untuk sell all
-local RFSellAllItems = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SellAllItems"] -- RemoteFunction
 
 sellAllButton.MouseButton1Click:Connect(function()
     pcall(function()
