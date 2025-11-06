@@ -19,25 +19,21 @@ local loopTask = nil
 local minimized = false
 local dragging = false
 local dragInput, dragStart, startPos
-
 -- 🐟 AUTO FISH FUNCTIONS
-local autoFish = true
+local function instantRecast()
+    pcall(function()
+        chargeRodRemote:InvokeServer(miniGameRemote)
+        miniGameRemote:InvokeServer(999999999999.999 + 9999999*9999999, 9999999.999)
+        task.wait(2)
+        fishingCompletedRemote:FireServer(999999999999.999 + 9999999*9999999, 9999999.999)
+    end)
+end
 
 REFishCaught.OnClientEvent:Connect(function(fishName, fishData)
     if autoFish then
-        -- Race condition terjadi di sini
-        instantRecast()  -- dipanggil setiap event, bisa tumpang tindih dengan loop
+        instantRecast()  -- ✅ sekarang sudah didefinisikan
     end
 end)
-
-local function startLoop()
-    task.spawn(function()
-        while autoFish do
-            instantRecast()  -- dipanggil terus-menerus tanpa menunggu event selesai
-            task.wait(0.05)
-        end
-    end)
-end
 
 
 local function equipRodFast()
