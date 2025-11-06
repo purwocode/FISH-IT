@@ -1,5 +1,5 @@
--- ⚡ AUTO FISH 3X + TELEPORT (Dragable + Minimize, Race Condition Safe)
--- by GPT-5
+-- ⚡ ULTRA-FAST AUTO FISH 3X+ + TELEPORT (Dragable + Minimize)
+-- Race Condition Safe, by GPT-5
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,7 +13,7 @@ local miniGameRemote = net["RF/RequestFishingMinigameStarted"]
 local fishingCompletedRemote = net["RE/FishingCompleted"]
 local equipRemote = net["RE/EquipToolFromHotbar"]
 local REFishCaught = net["RE/FishCaught"]
-local RFSellAllItems = net["RF/SellAllItems"] -- RemoteFunction
+local RFSellAllItems = net["RF/SellAllItems"]
 
 -- State
 local autoFish = false
@@ -21,16 +21,15 @@ local loopTask = nil
 local minimized = false
 local dragging = false
 local dragInput, dragStart, startPos
-local recastInProgress = false -- 🔑 race condition lock
+local recastInProgress = false
 
--- 🐟 AUTO FISH FUNCTIONS
+-- 🐟 ULTRA-FAST AUTO FISH FUNCTION
 local function instantRecast()
-    if recastInProgress then return end -- 🔒 prevent overlap
+    if recastInProgress then return end
     recastInProgress = true
     pcall(function()
         chargeRodRemote:InvokeServer(miniGameRemote)
         miniGameRemote:InvokeServer(999999999999.999 + 9999999*9999999, 9999999.999)
-        task.wait(2)
         fishingCompletedRemote:FireServer(999999999999.999 + 9999999*9999999, 9999999.999)
     end)
     recastInProgress = false
@@ -48,7 +47,7 @@ local function startLoop()
         while autoFish do
             equipRodFast()
             instantRecast()
-            task.wait(0.05)
+            task.wait(0.03) -- ⚡ ultra-fast, bisa ditingkatkan lagi jika server kuat
         end
     end)
 end
@@ -58,7 +57,7 @@ local function stopLoop()
     loopTask = nil
 end
 
--- Listener REFishCaught (tidak akan menabrak loop)
+-- Listener fish caught (tidak tumpang tindih)
 REFishCaught.OnClientEvent:Connect(function(fishName, fishData)
     if autoFish and not recastInProgress then
         print("[🎣] Fish caught:", fishName, "Weight:", fishData.Weight)
@@ -81,20 +80,20 @@ local teleportPoints = {
 }
 
 local function teleportTo(location)
-    local humanoidRootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if humanoidRootPart then
-        humanoidRootPart.CFrame = CFrame.new(location + Vector3.new(0, 5, 0))
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.CFrame = CFrame.new(location + Vector3.new(0,5,0))
     end
 end
 
 -- GUI setup
 local gui = Instance.new("ScreenGui")
-gui.Name = "FishTeleportGUI"
+gui.Name = "UltraFishGUI"
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 280, 0, 500)
-frame.Position = UDim2.new(0, 20, 0, 20)
+frame.Size = UDim2.new(0,280,0,500)
+frame.Position = UDim2.new(0,20,0,20)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.BorderSizePixel = 0
 frame.Parent = gui
@@ -103,7 +102,7 @@ frame.Parent = gui
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1,0,0,30)
 title.BackgroundTransparency = 1
-title.Text = "🎣 Auto Fish + Teleport"
+title.Text = "🎣 Ultra-Fast Auto Fish + Teleport"
 title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 18
@@ -122,79 +121,61 @@ title.InputBegan:Connect(function(input)
         end)
     end
 end)
-
 title.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement then
         dragInput = input
     end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        frame.Position = UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
     end
 end)
 
--- Close Button
+-- Close & Minimize Buttons
 local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 30, 0, 30)
-closeButton.Position = UDim2.new(1, -35, 0, 0)
+closeButton.Size = UDim2.new(0,30,0,30)
+closeButton.Position = UDim2.new(1,-35,0,0)
 closeButton.Text = "❌"
 closeButton.TextColor3 = Color3.new(1,1,1)
 closeButton.Font = Enum.Font.SourceSansBold
 closeButton.TextSize = 16
 closeButton.BackgroundColor3 = Color3.fromRGB(100,20,20)
 closeButton.Parent = frame
-
 closeButton.MouseButton1Click:Connect(function()
     stopLoop()
     gui:Destroy()
 end)
 
--- Minimize Button
 local minimizeButton = Instance.new("TextButton")
-minimizeButton.Size = UDim2.new(0, 30, 0, 30)
-minimizeButton.Position = UDim2.new(1, -70, 0, 0)
+minimizeButton.Size = UDim2.new(0,30,0,30)
+minimizeButton.Position = UDim2.new(1,-70,0,0)
 minimizeButton.Text = "➖"
 minimizeButton.TextColor3 = Color3.new(1,1,1)
 minimizeButton.Font = Enum.Font.SourceSansBold
 minimizeButton.TextSize = 16
 minimizeButton.BackgroundColor3 = Color3.fromRGB(80,80,80)
 minimizeButton.Parent = frame
-
--- Menu buttons
-local btnAutoFishMenu = Instance.new("TextButton")
-btnAutoFishMenu.Size = UDim2.new(0, 120, 0, 30)
-btnAutoFishMenu.Position = UDim2.new(0, 20, 0, 40)
-btnAutoFishMenu.Text = "🎣 Auto Fish"
-btnAutoFishMenu.BackgroundColor3 = Color3.fromRGB(50,50,50)
-btnAutoFishMenu.TextColor3 = Color3.new(1,1,1)
-btnAutoFishMenu.Font = Enum.Font.SourceSansBold
-btnAutoFishMenu.TextSize = 14
-btnAutoFishMenu.Parent = frame
-
-local btnTeleportMenu = Instance.new("TextButton")
-btnTeleportMenu.Size = UDim2.new(0, 120, 0, 30)
-btnTeleportMenu.Position = UDim2.new(0, 150, 0, 40)
-btnTeleportMenu.Text = "📍 Teleport"
-btnTeleportMenu.BackgroundColor3 = Color3.fromRGB(50,50,50)
-btnTeleportMenu.TextColor3 = Color3.new(1,1,1)
-btnTeleportMenu.Font = Enum.Font.SourceSansBold
-btnTeleportMenu.TextSize = 14
-btnTeleportMenu.Parent = frame
+minimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    autoFishPanel.Visible = not minimized
+    teleportPanel.Visible = not minimized
+    btnAutoFishMenu.Visible = not minimized
+    btnTeleportMenu.Visible = not minimized
+end)
 
 -- Panels
 local autoFishPanel = Instance.new("Frame")
-autoFishPanel.Size = UDim2.new(1, -20, 1, -90)
-autoFishPanel.Position = UDim2.new(0, 10, 0, 80)
+autoFishPanel.Size = UDim2.new(1,-20,1,-90)
+autoFishPanel.Position = UDim2.new(0,10,0,80)
 autoFishPanel.BackgroundTransparency = 1
 autoFishPanel.Visible = false
 autoFishPanel.Parent = frame
 
 local teleportPanel = Instance.new("ScrollingFrame")
-teleportPanel.Size = UDim2.new(1, -20, 1, -90)
-teleportPanel.Position = UDim2.new(0, 10, 0, 80)
+teleportPanel.Size = UDim2.new(1,-20,1,-90)
+teleportPanel.Position = UDim2.new(0,10,0,80)
 teleportPanel.CanvasSize = UDim2.new(0,0,0,0)
 teleportPanel.ScrollBarThickness = 8
 teleportPanel.BackgroundTransparency = 1
@@ -210,21 +191,16 @@ uilist.Parent = teleportPanel
 local toggleButton = Instance.new("TextButton")
 toggleButton.Size = UDim2.new(0,240,0,35)
 toggleButton.Position = UDim2.new(0,0,0,0)
-toggleButton.Text = "▶️ Start Auto Fish"
+toggleButton.Text = "▶️ Start Ultra-Fish"
 toggleButton.TextColor3 = Color3.new(1,1,1)
 toggleButton.Font = Enum.Font.SourceSansBold
 toggleButton.TextSize = 16
 toggleButton.BackgroundColor3 = Color3.fromRGB(45,45,45)
 toggleButton.Parent = autoFishPanel
-
 toggleButton.MouseButton1Click:Connect(function()
     autoFish = not autoFish
-    toggleButton.Text = autoFish and "⏹ Stop Auto Fish" or "▶️ Start Auto Fish"
-    if autoFish then
-        startLoop()
-    else
-        stopLoop()
-    end
+    toggleButton.Text = autoFish and "⏹ Stop Ultra-Fish" or "▶️ Start Ultra-Fish"
+    if autoFish then startLoop() else stopLoop() end
 end)
 
 -- Teleport buttons
@@ -237,7 +213,6 @@ for name, coords in pairs(teleportPoints) do
     btn.TextSize = 14
     btn.BackgroundColor3 = Color3.fromRGB(40,40,80)
     btn.Parent = teleportPanel
-
     btn.MouseButton1Click:Connect(function()
         teleportTo(coords)
         print("[🌍] Teleported to "..name)
@@ -245,23 +220,32 @@ for name, coords in pairs(teleportPoints) do
 end
 
 -- Menu toggle
+local btnAutoFishMenu = Instance.new("TextButton")
+btnAutoFishMenu.Size = UDim2.new(0,120,0,30)
+btnAutoFishMenu.Position = UDim2.new(0,20,0,40)
+btnAutoFishMenu.Text = "🎣 Auto Fish"
+btnAutoFishMenu.BackgroundColor3 = Color3.fromRGB(50,50,50)
+btnAutoFishMenu.TextColor3 = Color3.new(1,1,1)
+btnAutoFishMenu.Font = Enum.Font.SourceSansBold
+btnAutoFishMenu.TextSize = 14
+btnAutoFishMenu.Parent = frame
 btnAutoFishMenu.MouseButton1Click:Connect(function()
     autoFishPanel.Visible = true
     teleportPanel.Visible = false
 end)
 
+local btnTeleportMenu = Instance.new("TextButton")
+btnTeleportMenu.Size = UDim2.new(0,120,0,30)
+btnTeleportMenu.Position = UDim2.new(0,150,0,40)
+btnTeleportMenu.Text = "📍 Teleport"
+btnTeleportMenu.BackgroundColor3 = Color3.fromRGB(50,50,50)
+btnTeleportMenu.TextColor3 = Color3.new(1,1,1)
+btnTeleportMenu.Font = Enum.Font.SourceSansBold
+btnTeleportMenu.TextSize = 14
+btnTeleportMenu.Parent = frame
 btnTeleportMenu.MouseButton1Click:Connect(function()
     autoFishPanel.Visible = false
     teleportPanel.Visible = true
-end)
-
--- Minimize toggle
-minimizeButton.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    autoFishPanel.Visible = not minimized
-    teleportPanel.Visible = not minimized
-    btnAutoFishMenu.Visible = not minimized
-    btnTeleportMenu.Visible = not minimized
 end)
 
 -- Sell all fish button
@@ -274,7 +258,6 @@ sellAllButton.Font = Enum.Font.SourceSansBold
 sellAllButton.TextSize = 16
 sellAllButton.BackgroundColor3 = Color3.fromRGB(60,45,45)
 sellAllButton.Parent = autoFishPanel
-
 sellAllButton.MouseButton1Click:Connect(function()
     pcall(function()
         RFSellAllItems:InvokeServer()
@@ -282,4 +265,4 @@ sellAllButton.MouseButton1Click:Connect(function()
     end)
 end)
 
-print("[✅] Dragable Auto Fish & Teleport GUI Loaded — Race Condition Safe")
+print("[✅] Ultra-Fast Auto Fish GUI Loaded — Race Condition Safe")
