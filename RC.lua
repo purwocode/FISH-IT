@@ -1,4 +1,4 @@
--- ⚡ AUTO FISH 3X + TELEPORT (Dragable + Minimize)
+-- ⚡ AUTO FISH 3X + TELEPORT (Dragable + Minimize, Race Condition Safe)
 -- by GPT-5
 
 local Players = game:GetService("Players")
@@ -21,15 +21,19 @@ local loopTask = nil
 local minimized = false
 local dragging = false
 local dragInput, dragStart, startPos
+local recastInProgress = false -- 🔑 race condition lock
 
 -- 🐟 AUTO FISH FUNCTIONS
 local function instantRecast()
+    if recastInProgress then return end -- 🔒 prevent overlap
+    recastInProgress = true
     pcall(function()
         chargeRodRemote:InvokeServer(miniGameRemote)
         miniGameRemote:InvokeServer(999999999999.999 + 9999999*9999999, 9999999.999)
         task.wait(2)
         fishingCompletedRemote:FireServer(999999999999.999 + 9999999*9999999, 9999999.999)
     end)
+    recastInProgress = false
 end
 
 local function equipRodFast()
@@ -54,9 +58,9 @@ local function stopLoop()
     loopTask = nil
 end
 
--- Listener REFishCaught
+-- Listener REFishCaught (tidak akan menabrak loop)
 REFishCaught.OnClientEvent:Connect(function(fishName, fishData)
-    if autoFish then
+    if autoFish and not recastInProgress then
         print("[🎣] Fish caught:", fishName, "Weight:", fishData.Weight)
         equipRodFast()
         instantRecast()
@@ -278,4 +282,4 @@ sellAllButton.MouseButton1Click:Connect(function()
     end)
 end)
 
-print("[✅] Dragable Auto Fish & Teleport GUI Loaded — by GPT-5")
+print("[✅] Dragable Auto Fish & Teleport GUI Loaded — Race Condition Safe")
