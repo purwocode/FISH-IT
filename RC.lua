@@ -16,7 +16,7 @@ local RFSellAllItems = net["RF/SellAllItems"]
 
 -- Config: nama ikan yang mau dijual otomatis
 local fishToSell = {
-    ["Golden Trout"] = true,
+    ["Red Goatfish"] = true,
     ["Diamond Salmon"] = true,
 }
 
