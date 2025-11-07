@@ -1,11 +1,26 @@
--- 🎣 AUTO FISH + TELEPORT GUI (No Cycle Delay + Auto Tune)
+-- 🎣 AUTO FISH GUI (No Cycle Delay + Auto Tune + telesell loader)
 -- by GPT-5
 
+-- ⚙️ Services
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
+
+-- ⚙️ Load telesell.lua dari GitHub (gunakan raw link stabil)
+local telesellURL = "https://raw.githubusercontent.com/purwocode/FISH-IT/main/telesell.lua"
+local telesell = nil
+do
+	local success, result = pcall(function()
+		return loadstring(game:HttpGet(telesellURL))()
+	end)
+	if success then
+		telesell = result
+		print("[🧩] telesell.lua loaded successfully from GitHub!")
+	else
+		warn("[⚠️] Failed to load telesell.lua:", result)
+	end
+end
 
 -- ⚙️ Remotes
 local RFChargeFishingRod = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/ChargeFishingRod"]
@@ -31,26 +46,15 @@ local config = {
 	cancelDelay = 0.2
 }
 
--- ⚙️ Teleport locations
-local teleportSpots = {
-	["🏝️ Beach"] = Vector3.new(120, 5, -240),
-	["🌊 Dock"] = Vector3.new(-45, 4, 320),
-	["🐠 Lake"] = Vector3.new(520, 12, 140),
-	["🦈 Deep Sea"] = Vector3.new(950, 0, 800),
-}
-
 -- Helper functions
 local function clamp(v, lo, hi)
-	if v < lo then return lo end
-	if v > hi then return hi end
-	return v
+	return math.clamp(v, lo, hi)
 end
 
 local function safeSetConfig(key, val)
 	local n = tonumber(val)
 	if not n then return false end
-	n = clamp(n, MIN_DELAY, MAX_DELAY)
-	config[key] = n
+	config[key] = clamp(n, MIN_DELAY, MAX_DELAY)
 	return true
 end
 
@@ -69,10 +73,12 @@ local function doFishingCycle()
 	local ok = pcall(function()
 		local args = { [4] = workspace:GetServerTimeNow() }
 		RFChargeFishingRod:InvokeServer(unpack(args, 1, table.maxn(args)))
-		task.wait(0.1)
+
 		RFStartMinigame:InvokeServer(-1.233184814453125, 0.5949690465352809, 1762501523.357608)
+
 		task.wait(config.completeDelay)
 		REFishingCompleted:FireServer()
+
 		task.wait(config.cancelDelay)
 		RFCancelFishingInputs:InvokeServer()
 	end)
@@ -117,11 +123,11 @@ end
 
 -- === GUI ===
 local gui = Instance.new("ScreenGui")
-gui.Name = "AutoFishTeleportGUI"
+gui.Name = "AutoFishGUI"
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 450)
+frame.Size = UDim2.new(0, 280, 0, 360)
 frame.Position = UDim2.new(0, 20, 0, 20)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
@@ -131,7 +137,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -90, 0, 30)
 title.Position = UDim2.new(0, 10, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "🎣 Auto Fish + Teleport"
+title.Text = "🎣 Auto Fish (Auto Tune)"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 18
@@ -151,7 +157,7 @@ closeButton.MouseButton1Click:Connect(function()
 	gui:Destroy()
 end)
 
--- Drag window
+-- drag window
 title.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = true
@@ -172,7 +178,7 @@ UserInputService.InputChanged:Connect(function(input)
 	end
 end)
 
--- Buttons
+-- toggle auto fish
 local toggleButton = Instance.new("TextButton")
 toggleButton.Size = UDim2.new(1, -20, 0, 40)
 toggleButton.Position = UDim2.new(0, 10, 0, 50)
@@ -188,6 +194,7 @@ toggleButton.MouseButton1Click:Connect(function()
 	if autoFish then startLoop() else stopLoop() end
 end)
 
+-- Auto Tune Toggle
 local autoTuneButton = Instance.new("TextButton")
 autoTuneButton.Size = UDim2.new(1, -20, 0, 35)
 autoTuneButton.Position = UDim2.new(0, 10, 0, 100)
@@ -201,9 +208,10 @@ autoTuneButton.MouseButton1Click:Connect(function()
 	autoTune = not autoTune
 	autoTuneButton.Text = autoTune and "🧠 Auto Tune: ON" or "🧠 Auto Tune: OFF"
 	autoTuneButton.BackgroundColor3 = autoTune and Color3.fromRGB(70,100,50) or Color3.fromRGB(50,50,70)
+	print("[🧠] Auto Tune " .. (autoTune and "Enabled" or "Disabled"))
 end)
 
--- Delay inputs
+-- Delay input fields
 local function createDelayInput(labelText, defaultValue, y, key)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0, 150, 0, 24)
@@ -234,46 +242,37 @@ local function createDelayInput(labelText, defaultValue, y, key)
 			box.Text = tostring(config[key])
 		end
 	end)
+
 	return box
 end
 
 local completeBox = createDelayInput("🎯 Complete Delay:", config.completeDelay, 150, "completeDelay")
 local cancelBox = createDelayInput("❌ Cancel Delay:", config.cancelDelay, 190, "cancelDelay")
 
--- === TELEPORT SECTION ===
-local teleportLabel = Instance.new("TextLabel")
-teleportLabel.Size = UDim2.new(1, -20, 0, 24)
-teleportLabel.Position = UDim2.new(0, 10, 0, 230)
-teleportLabel.Text = "📍 Teleport Locations"
-teleportLabel.BackgroundTransparency = 1
-teleportLabel.TextColor3 = Color3.new(1,1,1)
-teleportLabel.Font = Enum.Font.SourceSansBold
-teleportLabel.TextSize = 16
-teleportLabel.TextXAlignment = Enum.TextXAlignment.Left
-teleportLabel.Parent = frame
-
-local yOffset = 260
-for name, pos in pairs(teleportSpots) do
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1, -20, 0, 30)
-	btn.Position = UDim2.new(0, 10, 0, yOffset)
-	btn.Text = name
-	btn.TextColor3 = Color3.new(1,1,1)
-	btn.BackgroundColor3 = Color3.fromRGB(40,60,80)
-	btn.Font = Enum.Font.SourceSans
-	btn.TextSize = 14
-	btn.Parent = frame
-	btn.MouseButton1Click:Connect(function()
-		local hrp = character:FindFirstChild("HumanoidRootPart")
-		if hrp then
-			hrp.CFrame = CFrame.new(pos)
-			print("[📍] Teleported to " .. name)
-		end
+-- telesell button
+if telesell then
+	local telesellButton = Instance.new("TextButton")
+	telesellButton.Size = UDim2.new(1, -20, 0, 40)
+	telesellButton.Position = UDim2.new(0, 10, 0, 240)
+	telesellButton.Text = "📦 Open TeleSell"
+	telesellButton.TextColor3 = Color3.new(1,1,1)
+	telesellButton.Font = Enum.Font.SourceSansBold
+	telesellButton.BackgroundColor3 = Color3.fromRGB(70,50,20)
+	telesellButton.Parent = frame
+	telesellButton.MouseButton1Click:Connect(function()
+		pcall(function()
+			if typeof(telesell) == "table" and telesell.Start then
+				telesell.Start()
+			elseif typeof(telesell) == "function" then
+				telesell()
+			else
+				warn("[⚠️] telesell.lua tidak memiliki fungsi Start()")
+			end
+		end)
 	end)
-	yOffset = yOffset + 35
 end
 
--- Auto update delay textboxes
+-- Auto-update GUI nilai delay
 task.spawn(function()
 	while gui.Parent do
 		task.wait(1)
@@ -284,4 +283,4 @@ task.spawn(function()
 	end
 end)
 
-print("[✅] Auto Fish + Teleport GUI Loaded.")
+print("[✅] Auto Fish GUI (No Cycle Delay + Auto Tune + telesell) loaded.")
